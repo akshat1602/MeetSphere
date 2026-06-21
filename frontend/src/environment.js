@@ -1,6 +1,6 @@
 let IS_PROD = true;
 const server = IS_PROD ?
-    "https://meetsphere-d9la.onrender.com" :
+    "https://meetsphere-backend-xyj7.onrender.com" :
 
     "http://localhost:8080"
 

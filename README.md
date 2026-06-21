@@ -5,8 +5,8 @@ It lets users create or join meetings, manage their meeting history, and communi
 
 ## Live Demo
 
-- Frontend: https://YOUR-FRONTEND-ON-RENDER.onrender.com  
-- Backend API: https://YOUR-BACKEND-ON-RENDER.onrender.com
+- Frontend: https://meetsphere-frontend-kjop.onrender.com/
+- Backend API: https://meetsphere-backend-xyj7.onrender.com
 
 ## Features
 

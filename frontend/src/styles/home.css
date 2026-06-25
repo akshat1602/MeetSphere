@@ -1,0 +1,281 @@
+.homePage {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 24%),
+    linear-gradient(135deg, #031525 0%, #06192d 45%, #02111f 100%);
+  color: #f8fbff;
+}
+
+.homeGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.02), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.homeNavbar {
+  position: relative;
+  z-index: 2;
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 26px 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.homeBrand h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.homeBrand span {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.homeNavActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.historyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(10px);
+}
+
+.historyBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(96, 165, 250, 0.4);
+  transform: translateY(-1px);
+}
+
+.logoutBtn.MuiButton-root {
+  color: #8ec5ff;
+  font-weight: 700;
+  text-transform: none;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+.homeHero {
+  position: relative;
+  z-index: 2;
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  min-height: calc(100vh - 96px);
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 56px;
+  padding: 40px 0 56px;
+}
+
+.homeLeft {
+  max-width: 560px;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  color: #bfdbfe;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.homeLeft h1 {
+  margin: 0 0 16px;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+}
+
+.homeLeft p {
+  margin: 0 0 28px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.joinCard {
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(10, 19, 34, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.joinCard h3 {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  color: #f8fbff;
+}
+
+.joinRow {
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.joinRow .MuiTextField-root {
+  flex: 1;
+}
+
+.joinRow .MuiOutlinedInput-root {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+.joinRow .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+.joinRow .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(96, 165, 250, 0.45) !important;
+}
+
+.joinRow .Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #60a5fa !important;
+}
+
+.joinRow .MuiInputLabel-root {
+  color: rgba(203, 213, 225, 0.72) !important;
+}
+
+.joinRow .MuiInputBase-input {
+  color: #ffffff !important;
+}
+
+.joinBtn.MuiButton-root {
+  min-width: 140px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: 700;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.joinBtn.MuiButton-root:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+}
+
+.homeRight {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.illustrationCard {
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(16px);
+}
+
+.illustrationCard img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #f8fafc 0%, #e5eef9 100%);
+}
+
+@media (max-width: 992px) {
+  .homeHero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-top: 24px;
+  }
+
+  .homeLeft {
+    max-width: 100%;
+  }
+
+  .homeRight {
+    order: -1;
+  }
+
+  .illustrationCard {
+    max-width: 460px;
+  }
+}
+
+@media (max-width: 640px) {
+  .homeNavbar {
+    width: min(100%, calc(100% - 32px));
+    padding-top: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .homeNavActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .homeHero {
+    width: min(100%, calc(100% - 32px));
+    min-height: auto;
+    padding: 20px 0 40px;
+  }
+
+  .homeLeft h1 {
+    font-size: 2.3rem;
+  }
+
+  .joinCard {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .joinRow {
+    flex-direction: column;
+  }
+
+  .joinBtn.MuiButton-root {
+    width: 100%;
+    min-height: 52px;
+  }
+
+  .historyBtn {
+    padding: 10px 12px;
+  }
+
+  .illustrationCard {
+    padding: 18px;
+    border-radius: 24px;
+  }
+}

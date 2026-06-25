@@ -1,76 +1,96 @@
-import React, { useContext, useState } from 'react'
-import withAuth from '../utils/withAuth'
-import { useNavigate } from 'react-router-dom'
-import "../App.css";
-import { Button, IconButton, TextField } from '@mui/material';
-import RestoreIcon from '@mui/icons-material/Restore';
-import { AuthContext } from '../contexts/AuthContext';
+import React, { useContext, useState } from "react";
+import withAuth from "../utils/withAuth";
+import { useNavigate } from "react-router-dom";
+import { Button, IconButton, TextField } from "@mui/material";
+import RestoreIcon from "@mui/icons-material/Restore";
+import { AuthContext } from "../contexts/AuthContext";
+import "../styles/home.css";
 
 function HomeComponent() {
+  const navigate = useNavigate();
+  const [meetingCode, setMeetingCode] = useState("");
+  const { addToUserHistory } = useContext(AuthContext);
 
+  const handleJoinVideoCall = async () => {
+    if (!meetingCode.trim()) return;
+    await addToUserHistory(meetingCode);
+    navigate(`/${meetingCode}`);
+  };
 
-    let navigate = useNavigate();
-    const [meetingCode, setMeetingCode] = useState("");
+  return (
+    <div className="homePage">
+      <div className="homeGradient" />
 
+      <header className="homeNavbar">
+        <div className="homeBrand">
+          <h2>MeetSphere</h2>
+          <span>Connect instantly, collaborate smoothly</span>
+        </div>
 
-    const {addToUserHistory} = useContext(AuthContext);
-    let handleJoinVideoCall = async () => {
-        await addToUserHistory(meetingCode)
-        navigate(`/${meetingCode}`)
-    }
+        <div className="homeNavActions">
+          <button
+            className="historyBtn"
+            onClick={() => navigate("/history")}
+          >
+            <RestoreIcon sx={{ fontSize: 20 }} />
+            <span>History</span>
+          </button>
 
-    return (
-        <>
+          <Button
+            className="logoutBtn"
+            onClick={() => {
+              localStorage.removeItem("token");
+              navigate("/auth");
+            }}
+          >
+            Logout
+          </Button>
+        </div>
+      </header>
 
-            <div className="navBar">
+      <main className="homeHero">
+        <section className="homeLeft">
+          <div className="heroBadge">Secure meeting access</div>
 
-                <div style={{ display: "flex", alignItems: "center" }}>
+          <h1>Join your meeting space in seconds</h1>
 
-                    <h2>MeetSphere</h2>
-                </div>
+          <p>
+            Start or re-enter a room with a meeting code and continue your
+            conversations with a cleaner, more modern workspace.
+          </p>
 
-                <div style={{ display: "flex", alignItems: "center" }}>
-                    <IconButton onClick={
-                        () => {
-                            navigate("/history")
-                        }
-                    }>
-                        <RestoreIcon />
-                    </IconButton>
-                    <p>History</p>
-
-                    <Button onClick={() => {
-                        localStorage.removeItem("token")
-                        navigate("/auth")
-                    }}>
-                        Logout
-                    </Button>
-                </div>
-
-
+          <div className="joinCard">
+            <h3>Enter meeting code</h3>
+            <div className="joinRow">
+              <TextField
+                fullWidth
+                value={meetingCode}
+                onChange={(e) => setMeetingCode(e.target.value)}
+                label="Meeting Code"
+                variant="outlined"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleJoinVideoCall();
+                }}
+              />
+              <Button
+                onClick={handleJoinVideoCall}
+                variant="contained"
+                className="joinBtn"
+              >
+                Join Now
+              </Button>
             </div>
+          </div>
+        </section>
 
-
-            <div className="meetContainer">
-                <div className="leftPanel">
-                    <div>
-                        <h2>Providing Quality Video Call</h2>
-
-                        <div style={{ display: 'flex', gap: "10px" }}>
-
-                            <TextField onChange={e => setMeetingCode(e.target.value)} id="outlined-basic" label="Meeting Code" variant="outlined" />
-                            <Button onClick={handleJoinVideoCall} variant='contained'>Join</Button>
-
-                        </div>
-                    </div>
-                </div>
-                <div className='rightPanel'>
-                    <img srcSet='/logo3.png' alt="" />
-                </div>
-            </div>
-        </>
-    )
+        <section className="homeRight">
+          <div className="illustrationCard">
+            <img src="/logo3.png" alt="Video meeting illustration" />
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 }
 
-
-export default withAuth(HomeComponent)
+export default withAuth(HomeComponent);

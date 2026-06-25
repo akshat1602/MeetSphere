@@ -23,7 +23,7 @@ app.use("/api/v1/users", userRoutes);
 const start = async () => {
   try {
     const connectionDB = await mongoose.connect(
-      "mongodb://trivediakshat02_db_user:prince07@ac-kx1ee1c-shard-00-00.rio1pta.mongodb.net:27017,ac-kx1ee1c-shard-00-01.rio1pta.mongodb.net:27017,ac-kx1ee1c-shard-00-02.rio1pta.mongodb.net:27017/?ssl=true&replicaSet=atlas-morp4a-shard-0&authSource=admin&appName=Cluster0"
+      "mongodb://trivediakshat02_db_user:fv7GYK75uvuJQfpL@ac-kx1ee1c-shard-00-00.rio1pta.mongodb.net:27017,ac-kx1ee1c-shard-00-01.rio1pta.mongodb.net:27017,ac-kx1ee1c-shard-00-02.rio1pta.mongodb.net:27017/?ssl=true&replicaSet=atlas-morp4a-shard-0&authSource=admin&appName=Cluster0"
     );
 
     console.log(`MONGO connected DB host : ${connectionDB.connection.host}`);

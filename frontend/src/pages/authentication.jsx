@@ -47,11 +47,11 @@ export default function Authentication() {
         <div className="authVisualOverlay"></div>
         <img src="/mobile.png" alt="MeetSphere preview" />
         <div className="authVisualContent">
-          <span>Welcome to MeetSphere</span>
-          <h2>Secure meetings with a cleaner experience</h2>
+          <span>MeetSphere</span>
+          <h2>Meet with clarity, not clutter</h2>
           <p>
-            Join calls, chat in real time, and manage your meetings through a
-            modern interface built for simplicity.
+            Secure calls, real-time chat, and a quieter interface designed to
+            feel calm, minimal, and focused.
           </p>
         </div>
       </div>
@@ -62,25 +62,27 @@ export default function Authentication() {
             <LockOutlinedIcon />
           </Avatar>
 
-          <h1>{formState === 0 ? "Welcome back" : "Create your account"}</h1>
+          <h1>{formState === 0 ? "Welcome back" : "Create account"}</h1>
           <p className="authSubtitle">
             {formState === 0
               ? "Sign in to continue to your meetings."
-              : "Sign up to start using MeetSphere."}
+              : "Create an account to start using MeetSphere."}
           </p>
 
           <div className="authTabs">
             <button
+              type="button"
               className={formState === 0 ? "active" : ""}
               onClick={() => setFormState(0)}
             >
-              Sign In
+              Sign in
             </button>
             <button
+              type="button"
               className={formState === 1 ? "active" : ""}
               onClick={() => setFormState(1)}
             >
-              Sign Up
+              Sign up
             </button>
           </div>
 
@@ -91,8 +93,9 @@ export default function Authentication() {
                 required
                 fullWidth
                 id="fullName"
-                label="Full Name"
+                label="Full name"
                 name="fullName"
+                placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -105,6 +108,7 @@ export default function Authentication() {
               id="username"
               label="Username"
               name="username"
+              placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -115,6 +119,7 @@ export default function Authentication() {
               fullWidth
               name="password"
               label="Password"
+              placeholder="Enter your password"
               type="password"
               id="password"
               value={password}

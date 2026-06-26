@@ -5,9 +5,9 @@
   justify-content: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.08), transparent 30%),
-    linear-gradient(135deg, #07111f 0%, #0b1324 50%, #101827 100%);
+    radial-gradient(circle at top left, rgba(123, 140, 120, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(160, 138, 112, 0.05), transparent 30%),
+    linear-gradient(135deg, #121314 0%, #16181a 50%, #1b1d20 100%);
 }
 
 .lobbyCard {
@@ -15,13 +15,13 @@
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: 20px;
-  background: rgba(15, 23, 42, 0.78);
+  background: rgba(24, 27, 30, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 22px;
   padding: 20px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
 }
 
 .lobbyLeft {
@@ -29,7 +29,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 14px;
-  color: #f8fafc;
+  color: #f2eee6;
 }
 
 .lobbyLeft h2 {
@@ -38,13 +38,13 @@
   line-height: 1.05;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #f8fafc;
+  color: #f2eee6;
 }
 
 .lobbyLeft p {
   margin: 0;
   max-width: 42ch;
-  color: rgba(226, 232, 240, 0.68);
+  color: #a7ada8;
   font-size: 0.98rem;
   line-height: 1.55;
 }
@@ -54,9 +54,9 @@
 }
 
 .lobbyLeft :global(.MuiOutlinedInput-root) {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.035);
   border-radius: 12px;
-  color: #f8fafc;
+  color: #f2eee6;
 }
 
 .lobbyLeft :global(.MuiOutlinedInput-notchedOutline) {
@@ -68,15 +68,15 @@
 }
 
 .lobbyLeft :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
-  border-color: rgba(59, 130, 246, 0.65);
+  border-color: rgba(123, 140, 120, 0.56);
 }
 
 .lobbyLeft :global(.MuiInputLabel-root) {
-  color: rgba(226, 232, 240, 0.58);
+  color: rgba(220, 224, 219, 0.6);
 }
 
 .lobbyLeft :global(.MuiInputLabel-root.Mui-focused) {
-  color: rgba(191, 219, 254, 0.9);
+  color: #d7ddd4;
 }
 
 .lobbyLeft :global(.MuiButton-contained) {
@@ -86,12 +86,13 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
-  background: #2563eb;
+  background: #7b8c78;
+  color: #f5f1ea;
   box-shadow: none;
 }
 
 .lobbyLeft :global(.MuiButton-contained:hover) {
-  background: #1d4ed8;
+  background: #697764;
   box-shadow: none;
 }
 
@@ -100,7 +101,7 @@
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 18px;
-  background: #020617;
+  background: #0f1113;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -115,8 +116,8 @@
   position: relative;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 24%),
-    linear-gradient(135deg, #07111f 0%, #0b1324 50%, #101827 100%);
+    radial-gradient(circle at top left, rgba(123, 140, 120, 0.06), transparent 24%),
+    linear-gradient(135deg, #121314 0%, #16181a 50%, #1b1d20 100%);
   overflow: hidden;
   padding: 18px 18px 92px;
   display: flex;
@@ -133,7 +134,7 @@
   object-fit: cover;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
   background: #000;
   z-index: 20;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -150,18 +151,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(24, 27, 30, 0.84);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   padding: 10px 14px;
   z-index: 30;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .buttonContainers :global(button) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   width: 48px;
   height: 48px;
   transition: transform 0.2s ease, background 0.2s ease;
@@ -169,7 +170,7 @@
 
 .buttonContainers :global(button:hover) {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .buttonContainers svg {
@@ -196,7 +197,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
 }
 
 .conferenceView video {
@@ -213,12 +214,12 @@
   width: 320px;
   max-width: 92vw;
   height: calc(100vh - 36px);
-  background: rgba(248, 250, 252, 0.96);
-  color: #0f172a;
+  background: rgba(238, 233, 225, 0.96);
+  color: #1b1d20;
   border-radius: 22px;
   padding: 18px;
   box-sizing: border-box;
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -233,7 +234,7 @@
   margin: 0 0 14px;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #1b1d20;
 }
 
 .chattingDisplay {
@@ -246,19 +247,19 @@
 .chatMessage {
   margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(27, 29, 32, 0.08);
 }
 
 .chatSender {
   margin: 0 0 4px;
   font-weight: 700;
-  color: #0f172a;
+  color: #1b1d20;
 }
 
 .chattingDisplay p {
   margin: 0 0 4px;
   word-break: break-word;
-  color: #334155;
+  color: #4d5452;
 }
 
 .chattingArea {
@@ -283,6 +284,12 @@
   box-shadow: none;
   text-transform: none;
   font-weight: 600;
+  background: #7b8c78;
+}
+
+.chattingArea :global(.MuiButton-contained:hover) {
+  background: #697764;
+  box-shadow: none;
 }
 
 @media (max-width: 1100px) {

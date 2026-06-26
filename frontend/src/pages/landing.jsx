@@ -43,7 +43,7 @@ export default function LandingPage() {
 
       <div className="landingMainContainer">
         <div className="landingText">
-          <span className="heroBadge">Simple video meetings</span>
+          <span className="landingHeroBadge">Simple video meetings</span>
 
           <h1>
             Meet without the <span>distance</span>

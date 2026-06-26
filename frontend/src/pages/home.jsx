@@ -47,7 +47,7 @@ function HomeComponent() {
 
       <main className="homeHero">
         <section className="homeLeft">
-          <div className="heroBadge">Secure meeting access</div>
+          <div className="homeHeroBadge">Secure meeting access</div>
 
           <h1>Join your meeting space in seconds</h1>
 

@@ -103,7 +103,7 @@ export default function VideoMeetComponent() {
 
       setScreenAvailable(!!navigator.mediaDevices.getDisplayMedia);
     } catch (error) {
-      console.log(error);
+      console.log("Permission error:", error);
       setVideoAvailable(false);
       setAudioAvailable(false);
       setVideo(false);
@@ -167,6 +167,7 @@ export default function VideoMeetComponent() {
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log("ICE candidate for", socketListId, event.candidate);
         socketRef.current.emit(
           "signal",
           socketListId,
@@ -176,10 +177,27 @@ export default function VideoMeetComponent() {
     };
 
     peerConnection.ontrack = (event) => {
+      console.log("Remote track received from", socketListId, event.streams);
       const [remoteStream] = event.streams;
       if (remoteStream) {
         updateRemoteStream(socketListId, remoteStream);
       }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log(
+        "ICE connection state:",
+        socketListId,
+        peerConnection.iceConnectionState
+      );
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      console.log(
+        "Peer connection state:",
+        socketListId,
+        peerConnection.connectionState
+      );
     };
 
     attachLocalTracksToPeer(peerConnection);
@@ -204,7 +222,7 @@ export default function VideoMeetComponent() {
           JSON.stringify({ sdp: peerConnection.localDescription })
         );
       } catch (error) {
-        console.log(error);
+        console.log("Renegotiation error:", error);
       }
     });
   };
@@ -214,7 +232,7 @@ export default function VideoMeetComponent() {
       navigator.mediaDevices
         .getDisplayMedia({ video: true, audio: true })
         .then(getDisplayMediaSuccess)
-        .catch((error) => console.log(error));
+        .catch((error) => console.log("Display media error:", error));
     }
   };
 
@@ -223,7 +241,7 @@ export default function VideoMeetComponent() {
       navigator.mediaDevices
         .getUserMedia({ video, audio })
         .then(getUserMediaSuccess)
-        .catch((error) => console.log(error));
+        .catch((error) => console.log("User media error:", error));
     } else {
       try {
         if (localVideoref.current?.srcObject) {
@@ -320,6 +338,7 @@ export default function VideoMeetComponent() {
 
     try {
       if (signal.sdp) {
+        console.log("Received SDP from", fromId, signal.sdp.type);
         await peerConnection.setRemoteDescription(
           new RTCSessionDescription(signal.sdp)
         );
@@ -337,10 +356,11 @@ export default function VideoMeetComponent() {
       }
 
       if (signal.ice) {
+        console.log("Received ICE from", fromId);
         await peerConnection.addIceCandidate(new RTCIceCandidate(signal.ice));
       }
     } catch (error) {
-      console.log(error);
+      console.log("Signal handling error:", error);
     }
   };
 
@@ -360,13 +380,18 @@ export default function VideoMeetComponent() {
 
     socketRef.current.on("connect", () => {
       socketIdRef.current = socketRef.current.id;
-      socketRef.current.emit("join-call", window.location.href);
+
+      const roomId = window.location.pathname.replace("/", "");
+      console.log("Joining room:", roomId, "socket:", socketIdRef.current);
+
+      socketRef.current.emit("join-call", roomId);
 
       socketRef.current.off("chat-message");
       socketRef.current.on("chat-message", addMessage);
 
       socketRef.current.off("user-left");
       socketRef.current.on("user-left", (id) => {
+        console.log("User left:", id);
         setVideos((prev) => prev.filter((videoItem) => videoItem.socketId !== id));
 
         if (connections[id]) {
@@ -381,6 +406,8 @@ export default function VideoMeetComponent() {
 
       socketRef.current.off("user-joined");
       socketRef.current.on("user-joined", async (id, clients) => {
+        console.log("User joined event:", id, clients);
+
         clients.forEach((socketListId) => {
           if (socketListId !== socketIdRef.current) {
             createPeerConnection(socketListId);
@@ -402,7 +429,7 @@ export default function VideoMeetComponent() {
                 JSON.stringify({ sdp: peerConnection.localDescription })
               );
             } catch (error) {
-              console.log(error);
+              console.log("Offer creation error:", error);
             }
           }
         }

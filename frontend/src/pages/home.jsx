@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import withAuth from "../utils/withAuth";
 import { useNavigate } from "react-router-dom";
-import { Button, IconButton, TextField } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import RestoreIcon from "@mui/icons-material/Restore";
 import { AuthContext } from "../contexts/AuthContext";
 import "../styles/home.css";
@@ -28,10 +28,7 @@ function HomeComponent() {
         </div>
 
         <div className="homeNavActions">
-          <button
-            className="historyBtn"
-            onClick={() => navigate("/history")}
-          >
+          <button className="historyBtn" onClick={() => navigate("/history")}>
             <RestoreIcon sx={{ fontSize: 20 }} />
             <span>History</span>
           </button>

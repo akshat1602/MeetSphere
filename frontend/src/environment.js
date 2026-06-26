@@ -1,8 +1,3 @@
-let IS_PROD = true;
-const server = IS_PROD ?
-    "https://meetsphere-backend-xyj7.onrender.com" :
-
-    "http://localhost:8080"
-
+const server = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 export default server;

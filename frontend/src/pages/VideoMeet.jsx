@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, memo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import io from "socket.io-client";
 import { Badge, IconButton, TextField, Button } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
@@ -43,16 +43,16 @@ const getAvatarColor = (name = "") => {
 
 const RemoteTile = memo(function RemoteTile({
   participant,
-  expandedId,
-  onToggleExpand,
+  stagedId,
+  onStageToggle,
 }) {
   const videoRef = useRef(null);
+  const audioRef = useRef(null);
   const hasActiveVideo = participant.videoEnabled && !!participant.stream;
+  const isStaged = stagedId === participant.socketId;
 
   useEffect(() => {
-    if (!videoRef.current) return;
-
-    if (participant.stream && participant.videoEnabled) {
+    if (participant.stream && participant.videoEnabled && videoRef.current) {
       if (videoRef.current.srcObject !== participant.stream) {
         videoRef.current.srcObject = participant.stream;
       }
@@ -61,18 +61,36 @@ const RemoteTile = memo(function RemoteTile({
       if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch(() => {});
       }
-    } else {
+    } else if (videoRef.current) {
       videoRef.current.srcObject = null;
+    }
+
+    if (participant.stream && audioRef.current) {
+      if (audioRef.current.srcObject !== participant.stream) {
+        audioRef.current.srcObject = participant.stream;
+      }
+
+      audioRef.current.muted = false;
+      const audioPlayPromise = audioRef.current.play?.();
+      if (audioPlayPromise && typeof audioPlayPromise.catch === "function") {
+        audioPlayPromise.catch((err) => {
+          console.log("Remote audio play blocked:", err);
+        });
+      }
+    } else if (audioRef.current) {
+      audioRef.current.srcObject = null;
     }
   }, [participant.stream, participant.videoEnabled]);
 
   return (
     <div
       className={`${styles.participantTile} ${
-        expandedId === participant.socketId ? styles.participantTileExpanded : ""
+        isStaged ? styles.participantTileExpanded : ""
       }`}
-      onClick={() => onToggleExpand(participant.socketId)}
+      onClick={() => onStageToggle(participant.socketId)}
     >
+      <audio ref={audioRef} autoPlay playsInline />
+
       {hasActiveVideo ? (
         <video
           ref={videoRef}
@@ -123,7 +141,7 @@ export default function VideoMeetComponent() {
   const [username, setUsername] = useState("");
   const [videos, setVideos] = useState([]);
   const [selfViewSmall, setSelfViewSmall] = useState(true);
-  const [expandedTile, setExpandedTile] = useState(null);
+  const [centerStageId, setCenterStageId] = useState(null);
 
   const black = ({ width = 640, height = 480 } = {}) => {
     const canvas = Object.assign(document.createElement("canvas"), {
@@ -354,8 +372,16 @@ export default function VideoMeetComponent() {
   const initializeMedia = useCallback(async () => {
     try {
       const userMediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 360 },
+          frameRate: { ideal: 24, max: 24 },
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
 
       cameraStreamRef.current = userMediaStream;
@@ -498,6 +524,7 @@ export default function VideoMeetComponent() {
       socketRef.current.off("user-left");
       socketRef.current.on("user-left", (id) => {
         setVideos((prev) => prev.filter((videoItem) => videoItem.socketId !== id));
+        setCenterStageId((prev) => (prev === id ? null : prev));
 
         if (connections[id]) {
           try {
@@ -546,7 +573,11 @@ export default function VideoMeetComponent() {
 
     try {
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
+        video: {
+          frameRate: { ideal: 15, max: 15 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
         audio: true,
       });
 
@@ -623,9 +654,8 @@ export default function VideoMeetComponent() {
     micTrack.enabled = nextEnabled;
     setAudio(nextEnabled);
 
-    const nextTrack = nextEnabled ? micTrack : silence();
-    currentAudioTrackRef.current = nextTrack;
-    await replaceOutgoingTrack("audio", nextTrack);
+    currentAudioTrackRef.current = nextEnabled ? micTrack : silence();
+    await replaceOutgoingTrack("audio", currentAudioTrackRef.current);
     emitMediaState({ audioEnabled: nextEnabled });
   }, [audio, emitMediaState, getMicTrack, replaceOutgoingTrack]);
 
@@ -679,8 +709,17 @@ export default function VideoMeetComponent() {
   }, [showModal]);
 
   const toggleExpandedTile = useCallback((socketId) => {
-    setExpandedTile((prev) => (prev === socketId ? null : socketId));
+    setCenterStageId((prev) => (prev === socketId ? null : socketId));
   }, []);
+
+  const orderedVideos = useMemo(() => {
+    if (!centerStageId) return videos;
+
+    const staged = videos.find((v) => v.socketId === centerStageId);
+    const others = videos.filter((v) => v.socketId !== centerStageId);
+
+    return staged ? [staged, ...others] : videos;
+  }, [centerStageId, videos]);
 
   const localInitial = getInitial(username);
   const localColor = getAvatarColor(username);
@@ -714,40 +753,98 @@ export default function VideoMeetComponent() {
         </div>
       ) : (
         <div className={styles.meetVideoContainer}>
-          {showModal ? (
-            <div className={styles.chatRoom}>
-              <div className={styles.chatContainer}>
-                <h1>Chat</h1>
-
-                <div className={styles.chattingDisplay}>
-                  {messages.length > 0 ? (
-                    messages.map((item, index) => (
-                      <div className={styles.chatMessage} key={index}>
-                        <p className={styles.chatSender}>{item.sender}</p>
-                        <p>{item.data}</p>
-                      </div>
+          <div
+            className={`${styles.meetingShell} ${
+              !showModal ? styles.meetingShellFull : ""
+            }`}
+          >
+            <div className={styles.stageColumn}>
+              <div className={styles.stageSurface}>
+                <div
+                  className={`${styles.conferenceView} ${
+                    showModal ? styles.conferenceWithChat : ""
+                  }`}
+                >
+                  {orderedVideos.length > 0 ? (
+                    orderedVideos.map((participant) => (
+                      <RemoteTile
+                        key={participant.socketId}
+                        participant={participant}
+                        stagedId={centerStageId}
+                        onStageToggle={toggleExpandedTile}
+                      />
                     ))
                   ) : (
-                    <p>No Messages Yet</p>
+                    <div className={styles.emptyStage}>Waiting for participants…</div>
                   )}
                 </div>
 
-                <div className={styles.chattingArea}>
-                  <TextField
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    label="Enter your chat"
-                    variant="outlined"
-                    fullWidth
-                    size="small"
+                <div
+                  className={`${styles.selfViewWrapper} ${
+                    selfViewSmall ? styles.selfViewSmall : styles.selfViewLarge
+                  }`}
+                  onClick={() => setSelfViewSmall((prev) => !prev)}
+                >
+                  <video
+                    className={styles.meetUserVideo}
+                    ref={selfVideoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    style={{ display: video || screen ? "block" : "none" }}
                   />
-                  <Button variant="contained" onClick={sendMessage}>
-                    Send
-                  </Button>
+
+                  {!video && !screen ? (
+                    <div
+                      className={styles.avatarTile}
+                      style={{ backgroundColor: localColor }}
+                    >
+                      <span>{localInitial}</span>
+                    </div>
+                  ) : null}
+
+                  <div className={styles.participantMeta}>
+                    <span>{username || "You"}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          ) : null}
+
+            {showModal ? (
+              <aside className={styles.chatRoom}>
+                <div className={styles.chatContainer}>
+                  <h1>Chat</h1>
+
+                  <div className={styles.chattingDisplay}>
+                    {messages.length > 0 ? (
+                      messages.map((item, index) => (
+                        <div className={styles.chatMessage} key={index}>
+                          <p className={styles.chatSender}>{item.sender}</p>
+                          <p>{item.data}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>No Messages Yet</p>
+                    )}
+                  </div>
+
+                  <div className={styles.chattingArea}>
+                    <TextField
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      label="Enter your chat"
+                      variant="outlined"
+                      fullWidth
+                      size="small"
+                    />
+                    <Button variant="contained" onClick={sendMessage}>
+                      Send
+                    </Button>
+                  </div>
+                </div>
+              </aside>
+            ) : null}
+          </div>
 
           <div className={styles.buttonContainers}>
             <IconButton
@@ -781,50 +878,6 @@ export default function VideoMeetComponent() {
                 <ChatIcon />
               </IconButton>
             </Badge>
-          </div>
-
-          <div
-            className={`${styles.selfViewWrapper} ${
-              selfViewSmall ? styles.selfViewSmall : styles.selfViewLarge
-            }`}
-            onClick={() => setSelfViewSmall((prev) => !prev)}
-          >
-            <video
-              className={styles.meetUserVideo}
-              ref={selfVideoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{ display: video || screen ? "block" : "none" }}
-            />
-
-            {!video && !screen ? (
-              <div
-                className={styles.avatarTile}
-                style={{ backgroundColor: localColor }}
-              >
-                <span>{localInitial}</span>
-              </div>
-            ) : null}
-
-            <div className={styles.participantMeta}>
-              <span>{username || "You"}</span>
-            </div>
-          </div>
-
-          <div
-            className={`${styles.conferenceView} ${
-              showModal ? styles.conferenceWithChat : ""
-            }`}
-          >
-            {videos.map((participant) => (
-              <RemoteTile
-                key={participant.socketId}
-                participant={participant}
-                expandedId={expandedTile}
-                onToggleExpand={toggleExpandedTile}
-              />
-            ))}
           </div>
         </div>
       )}

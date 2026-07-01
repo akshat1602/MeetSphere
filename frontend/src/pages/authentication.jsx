@@ -39,7 +39,6 @@ export default function Authentication() {
 
       if (formState === 0) {
         await handleLogin(username.trim(), password);
-        setError("");
       } else {
         const result = await handleRegister(
           name.trim(),

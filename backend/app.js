@@ -14,21 +14,28 @@ const server = createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://meetsphere-frontend-kjop.onrender.com",
   process.env.CLIENT_URL,
   process.env.CLIENT_URL_2,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin(origin, callback) {
+    console.log("CORS origin:", origin);
+
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "40kb" }));
 app.use(express.urlencoded({ limit: "40kb", extended: true }));
@@ -55,6 +62,7 @@ const start = async () => {
 
     server.listen(PORT, () => {
       console.log(`Listening on port ${PORT}`);
+      console.log("Allowed origins:", allowedOrigins);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

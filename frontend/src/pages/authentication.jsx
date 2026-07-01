@@ -12,28 +12,61 @@ export default function Authentication() {
   const [message, setMessage] = React.useState("");
   const [formState, setFormState] = React.useState(0);
   const [open, setOpen] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const { handleRegister, handleLogin } = React.useContext(AuthContext);
 
+  const resetMessages = () => {
+    setError("");
+    setMessage("");
+  };
+
   const handleAuth = async () => {
+    resetMessages();
+
+    if (formState === 1 && !name.trim()) {
+      setError("Full name is required");
+      return;
+    }
+
+    if (!username.trim() || !password.trim()) {
+      setError("Username and password are required");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       if (formState === 0) {
-        await handleLogin(username, password);
+        await handleLogin(username.trim(), password);
         setError("");
       } else {
-        const result = await handleRegister(name, username, password);
+        const result = await handleRegister(
+          name.trim(),
+          username.trim(),
+          password
+        );
+
         setUsername("");
         setPassword("");
         setName("");
-        setMessage(result);
+        setMessage(result || "User registered successfully");
         setOpen(true);
-        setError("");
         setFormState(0);
       }
     } catch (err) {
-      console.log(err);
-      const msg = err?.response?.data?.message || "Something went wrong";
+      console.log("AUTH ERROR:", err);
+      console.log("AUTH ERROR RESPONSE:", err?.response);
+      console.log("AUTH ERROR DATA:", err?.response?.data);
+
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong";
+
       setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -73,14 +106,20 @@ export default function Authentication() {
             <button
               type="button"
               className={formState === 0 ? "active" : ""}
-              onClick={() => setFormState(0)}
+              onClick={() => {
+                setFormState(0);
+                resetMessages();
+              }}
             >
               Sign in
             </button>
             <button
               type="button"
               className={formState === 1 ? "active" : ""}
-              onClick={() => setFormState(1)}
+              onClick={() => {
+                setFormState(1);
+                resetMessages();
+              }}
             >
               Sign up
             </button>
@@ -124,6 +163,11 @@ export default function Authentication() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleAuth();
+                }
+              }}
             />
 
             {error && <p className="authError">{error}</p>}
@@ -134,8 +178,9 @@ export default function Authentication() {
               variant="contained"
               className="authButton"
               onClick={handleAuth}
+              disabled={loading}
             >
-              {formState === 0 ? "Login" : "Register"}
+              {loading ? "Please wait..." : formState === 0 ? "Login" : "Register"}
             </Button>
           </div>
         </div>

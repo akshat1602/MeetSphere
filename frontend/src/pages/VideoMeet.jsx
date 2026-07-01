@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
-import io from "socket.io-client";
+import { useParams } from "react-router-dom";
+import { io } from "socket.io-client";
 import { Badge, IconButton, TextField, Button } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
@@ -13,8 +14,6 @@ import styles from "../styles/videoComponent.module.css";
 import server from "../environment";
 
 const server_url = server;
-
-let connections = {};
 
 const peerConfigConnections = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -40,6 +39,8 @@ const getAvatarColor = (name = "") => {
   const seed = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colorPalette[seed % colorPalette.length];
 };
+
+const normalizeRoomCode = (value = "") => value.trim().toUpperCase();
 
 const RemoteTile = memo(function RemoteTile({
   participant,
@@ -73,9 +74,7 @@ const RemoteTile = memo(function RemoteTile({
       audioRef.current.muted = false;
       const audioPlayPromise = audioRef.current.play?.();
       if (audioPlayPromise && typeof audioPlayPromise.catch === "function") {
-        audioPlayPromise.catch((err) => {
-          console.log("Remote audio play blocked:", err);
-        });
+        audioPlayPromise.catch(() => {});
       }
     } else if (audioRef.current) {
       audioRef.current.srcObject = null;
@@ -115,9 +114,12 @@ const RemoteTile = memo(function RemoteTile({
 });
 
 export default function VideoMeetComponent() {
+  const { url } = useParams();
+  const roomCodeRef = useRef(normalizeRoomCode(url || ""));
   const socketRef = useRef(null);
   const socketIdRef = useRef(null);
-  const roomUrlRef = useRef(window.location.href);
+  const connectionsRef = useRef({});
+  const audioContextRef = useRef(null);
 
   const lobbyVideoRef = useRef(null);
   const selfVideoRef = useRef(null);
@@ -159,9 +161,11 @@ export default function VideoMeetComponent() {
 
   const silence = () => {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioCtx();
-    const oscillator = ctx.createOscillator();
-    const dst = oscillator.connect(ctx.createMediaStreamDestination());
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioCtx();
+    }
+    const oscillator = audioContextRef.current.createOscillator();
+    const dst = oscillator.connect(audioContextRef.current.createMediaStreamDestination());
     oscillator.start();
     const track = dst.stream.getAudioTracks()[0];
     track.enabled = false;
@@ -248,8 +252,25 @@ export default function VideoMeetComponent() {
     });
   }, []);
 
+  const cleanupPeerConnection = useCallback((socketId) => {
+    const peer = connectionsRef.current[socketId];
+    if (!peer) return;
+
+    try {
+      peer.ontrack = null;
+      peer.onicecandidate = null;
+      peer.onnegotiationneeded = null;
+      peer.oniceconnectionstatechange = null;
+      peer.onconnectionstatechange = null;
+      peer.onsignalingstatechange = null;
+      peer.close();
+    } catch {}
+
+    delete connectionsRef.current[socketId];
+  }, []);
+
   const replaceOutgoingTrack = useCallback(async (kind, newTrack) => {
-    const peerConnections = Object.values(connections);
+    const peerConnections = Object.values(connectionsRef.current);
 
     await Promise.all(
       peerConnections.map(async (peerConnection) => {
@@ -269,7 +290,7 @@ export default function VideoMeetComponent() {
       if (!socketRef.current) return;
 
       socketRef.current.emit("media-state-change", {
-        roomId: roomUrlRef.current,
+        roomId: roomCodeRef.current,
         socketId: socketIdRef.current,
         username,
         videoEnabled:
@@ -297,7 +318,7 @@ export default function VideoMeetComponent() {
       );
 
       if (existingSender) {
-        existingSender.replaceTrack(track).catch((error) => console.log(error));
+        existingSender.replaceTrack(track).catch(() => {});
       } else {
         peerConnection.addTrack(track, stream);
       }
@@ -306,8 +327,8 @@ export default function VideoMeetComponent() {
 
   const createPeerConnection = useCallback(
     (socketListId, remoteUsername = "Guest") => {
-      if (connections[socketListId]) {
-        return connections[socketListId];
+      if (connectionsRef.current[socketListId]) {
+        return connectionsRef.current[socketListId];
       }
 
       const peerConnection = new RTCPeerConnection(peerConfigConnections);
@@ -325,12 +346,15 @@ export default function VideoMeetComponent() {
       peerConnection.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream) {
-          upsertParticipant(socketListId, { stream: remoteStream });
+          upsertParticipant(socketListId, {
+            stream: remoteStream,
+            username: remoteUsername,
+          });
         }
       };
 
       attachLocalTracksToPeer(peerConnection);
-      connections[socketListId] = peerConnection;
+      connectionsRef.current[socketListId] = peerConnection;
 
       upsertParticipant(socketListId, {
         username: remoteUsername,
@@ -345,7 +369,7 @@ export default function VideoMeetComponent() {
 
   const createAndSendOffer = useCallback(
     async (socketListId) => {
-      const peerConnection = connections[socketListId];
+      const peerConnection = connectionsRef.current[socketListId];
       if (!peerConnection || peerConnection.signalingState !== "stable") return;
 
       try {
@@ -406,37 +430,10 @@ export default function VideoMeetComponent() {
       setVideo(false);
       setAudio(false);
       setScreenAvailable(!!navigator.mediaDevices.getDisplayMedia);
+      currentVideoTrackRef.current = black();
+      currentAudioTrackRef.current = silence();
     }
   }, [getCameraTrack, getMicTrack, syncLobbyPreview]);
-
-  useEffect(() => {
-    initializeMedia();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.removeAllListeners();
-        socketRef.current.disconnect();
-      }
-
-      if (cameraStreamRef.current) {
-        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-
-      Object.values(connections).forEach((peer) => {
-        try {
-          peer.close();
-        } catch (error) {
-          console.log(error);
-        }
-      });
-
-      connections = {};
-    };
-  }, [initializeMedia]);
 
   const gotMessageFromServer = useCallback(
     async (fromId, message) => {
@@ -499,7 +496,13 @@ export default function VideoMeetComponent() {
   const connectToSocketServer = useCallback(() => {
     if (socketRef.current?.connected) return;
 
-    socketRef.current = io.connect(server_url, { secure: false });
+    socketRef.current = io(server_url, {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+    });
+
     socketRef.current.on("signal", gotMessageFromServer);
 
     socketRef.current.on("media-state-changed", (payload) => {
@@ -516,7 +519,10 @@ export default function VideoMeetComponent() {
 
     socketRef.current.on("connect", () => {
       socketIdRef.current = socketRef.current.id;
-      socketRef.current.emit("join-call", roomUrlRef.current);
+
+      socketRef.current.emit("join-call", roomCodeRef.current, (response) => {
+        console.log("join-call response:", response);
+      });
 
       socketRef.current.off("chat-message");
       socketRef.current.on("chat-message", addMessage);
@@ -525,15 +531,7 @@ export default function VideoMeetComponent() {
       socketRef.current.on("user-left", (id) => {
         setVideos((prev) => prev.filter((videoItem) => videoItem.socketId !== id));
         setCenterStageId((prev) => (prev === id ? null : prev));
-
-        if (connections[id]) {
-          try {
-            connections[id].close();
-          } catch (error) {
-            console.log(error);
-          }
-          delete connections[id];
-        }
+        cleanupPeerConnection(id);
       });
 
       socketRef.current.off("user-joined");
@@ -556,10 +554,19 @@ export default function VideoMeetComponent() {
           audioEnabled: audio,
         });
       });
+
+      socketRef.current.on("connect_error", (err) => {
+        console.error("Socket connection error:", err.message);
+      });
+
+      socketRef.current.on("disconnect", (reason) => {
+        console.warn("Socket disconnected:", reason);
+      });
     });
   }, [
     addMessage,
     audio,
+    cleanupPeerConnection,
     createAndSendOffer,
     createPeerConnection,
     emitMediaState,
@@ -678,17 +685,17 @@ export default function VideoMeetComponent() {
       socketRef.current.disconnect();
     }
 
-    Object.values(connections).forEach((peer) => {
-      try {
-        peer.close();
-      } catch (error) {
-        console.log(error);
-      }
+    Object.keys(connectionsRef.current).forEach((id) => {
+      cleanupPeerConnection(id);
     });
 
-    connections = {};
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+
     window.location.href = "/";
-  }, []);
+  }, [cleanupPeerConnection]);
 
   const sendMessage = useCallback(() => {
     if (!message.trim() || !socketRef.current) return;
@@ -697,10 +704,10 @@ export default function VideoMeetComponent() {
   }, [message, username]);
 
   const connect = useCallback(() => {
-    if (!username.trim()) return;
+    if (!username.trim() || !roomCodeRef.current) return;
     setAskForUsername(false);
     connectToSocketServer();
-  }, [connectToSocketServer, username]);
+  }, [connectToSocketServer]);
 
   const toggleChat = useCallback(() => {
     const nextValue = !showModal;
@@ -723,6 +730,34 @@ export default function VideoMeetComponent() {
 
   const localInitial = getInitial(username);
   const localColor = getAvatarColor(username);
+
+  useEffect(() => {
+    initializeMedia();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+      }
+
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      Object.keys(connectionsRef.current).forEach((id) => {
+        cleanupPeerConnection(id);
+      });
+
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
+    };
+  }, [cleanupPeerConnection, initializeMedia]);
 
   return (
     <div>

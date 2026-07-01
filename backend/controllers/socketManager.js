@@ -4,63 +4,71 @@ let connections = {};
 let messages = {};
 let timeOnLine = {};
 let socketRoomMap = {};
+let socketUserMap = {};
 
-export const connectToSocket = (server) => {
+const normalizeRoomCode = (value = "") => value.trim().toUpperCase();
+
+export const connectToSocket = (server, allowedOrigins = []) => {
   const io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      origin: allowedOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
 
   io.on("connection", (socket) => {
-    console.log("SOMETHING CONNECTED:", socket.id);
+    console.log("SOCKET CONNECTED:", socket.id, "origin:", socket.handshake.headers.origin);
 
-    socket.on("join-call", (path) => {
-      if (!path) return;
+    socket.on("join-call", (roomCode, callback) => {
+      const normalizedRoomCode = normalizeRoomCode(roomCode);
 
-      if (!connections[path]) {
-        connections[path] = [];
+      if (!normalizedRoomCode) {
+        return callback?.({ ok: false, message: "Invalid room code" });
       }
 
-      const alreadyJoined = connections[path].includes(socket.id);
+      if (!connections[normalizedRoomCode]) {
+        connections[normalizedRoomCode] = [];
+      }
+
+      const alreadyJoined = connections[normalizedRoomCode].includes(socket.id);
 
       if (!alreadyJoined) {
-        connections[path].push(socket.id);
+        connections[normalizedRoomCode].push(socket.id);
       }
 
-      socketRoomMap[socket.id] = path;
+      socketRoomMap[socket.id] = normalizedRoomCode;
       timeOnLine[socket.id] = new Date();
-      socket.join(path);
+      socket.join(normalizedRoomCode);
 
-      for (let i = 0; i < connections[path].length; i++) {
-        io.to(connections[path][i]).emit("user-joined", socket.id, connections[path]);
-      }
+      callback?.({
+        ok: true,
+        roomCode: normalizedRoomCode,
+        participants: connections[normalizedRoomCode],
+      });
 
-      if (messages[path]) {
-        for (let i = 0; i < messages[path].length; i++) {
-          io.to(socket.id).emit(
-            "chat-message",
-            messages[path][i].data,
-            messages[path][i].sender,
-            messages[path][i]["socket-id-sender"]
-          );
-        }
-      }
+      io.to(normalizedRoomCode).emit("user-joined", socket.id, connections[normalizedRoomCode]);
     });
 
-    socket.on("signal", (told, message) => {
-      io.to(told).emit("signal", socket.id, message);
+    socket.on("register-user", ({ username }) => {
+      socketUserMap[socket.id] = username || "Guest";
+    });
+
+    socket.on("signal", (targetId, message) => {
+      io.to(targetId).emit("signal", socket.id, message);
     });
 
     socket.on("media-state-change", (payload = {}) => {
-      const roomId = socketRoomMap[socket.id] || payload.roomId;
+      const roomId = socketRoomMap[socket.id] || normalizeRoomCode(payload.roomId || "");
       if (!roomId) return;
+
+      if (payload.username) {
+        socketUserMap[socket.id] = payload.username;
+      }
 
       socket.to(roomId).emit("media-state-changed", {
         socketId: socket.id,
-        username: payload.username || "Guest",
+        username: payload.username || socketUserMap[socket.id] || "Guest",
         videoEnabled:
           typeof payload.videoEnabled === "boolean" ? payload.videoEnabled : true,
         audioEnabled:
@@ -82,8 +90,6 @@ export const connectToSocket = (server) => {
         "socket-id-sender": socket.id,
       });
 
-      console.log("message:", sender, data);
-
       io.to(roomId).emit("chat-message", data, sender, socket.id);
     });
 
@@ -98,9 +104,7 @@ export const connectToSocket = (server) => {
       const roomId = socketRoomMap[socket.id];
 
       if (roomId && connections[roomId]) {
-        connections[roomId].forEach((id) => {
-          io.to(id).emit("user-left", socket.id);
-        });
+        io.to(roomId).emit("user-left", socket.id);
 
         connections[roomId] = connections[roomId].filter((id) => id !== socket.id);
 
@@ -111,6 +115,7 @@ export const connectToSocket = (server) => {
       }
 
       delete socketRoomMap[socket.id];
+      delete socketUserMap[socket.id];
       delete timeOnLine[socket.id];
 
       console.log(`Socket disconnected: ${socket.id}, duration: ${diffTime}ms`);
